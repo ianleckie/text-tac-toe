@@ -17,15 +17,16 @@ UI methods
 */
 const UI = {
 
-	curKeyCode : null,
-	curChar    : null,
-	userInput  : '',
+	curKeyCode     : null,
+	curChar        : null,
+	userInput      : '',
+	maxInputLength : 50,
 	
 	allowedCharsRegex : /^[a-z0-9 ]+$/i,
 	
 	keycodesMap : {
-		enter:  [ '13' ],
-		delete: [ '127', '8' ],
+		enter  : [ '13' ],
+		delete : [ '127', '8' ],
 	},
 
 	init : () => {
@@ -93,13 +94,18 @@ const UI = {
 
 					curChar = String.fromCharCode( UI.curKeyCode );
 
+					console.log( UI.userInput.length, UI.maxInputLength );
+
 					// only send characters that match allowedCharsRegex
-					if ( UI.allowedCharsRegex.test( curChar ) ) {
+					if ( UI.allowedCharsRegex.test( curChar ) && ( UI.userInput.length < UI.maxInputLength ) ) {
 
 						UI.userInput = UI.userInput + curChar;
 
 						textTerminal.typeLetter( curChar );
 
+					} else {
+
+						// TODO: flash screen?
 					}
 
 				}
