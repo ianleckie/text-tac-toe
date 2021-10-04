@@ -103,6 +103,12 @@ p {
   color: green;
   background-color: transparent;
 }
+#game #computer #screen.flash {
+  background-color: darkgreen;
+}
+#game #computer #screen.flash #text span {
+  color: #000;
+}
 #game #computer #reflection {
   background: linear-gradient(200deg, rgba(255, 255, 255, 0.125) 20%, transparent);
 }

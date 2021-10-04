@@ -114,6 +114,16 @@ p {
 			}
 		}
 
+		#screen.flash {
+			background-color: darkgreen;
+
+			#text {
+				span {
+					color: #000;
+				}
+			}
+		}
+
 		#reflection {
 			background: linear-gradient( 200deg, rgba( white, 0.125 ) 20%, transparent );
 		}

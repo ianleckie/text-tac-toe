@@ -1,16 +1,12 @@
-// Status variables
-let isPlaying   = false;
-let gameStarted = false;
-let isWriting   = true;
-let inputOK     = false;
-
-// Timing variables
-let cursorSpeed      = 250;
-let startTypingDelay = 2000;
-let typingDelay      = 125;
-let cssDelay         = 1000;
-let gameDelay        = cssDelay + 500;
-let longDelay        = 999999999;
+/*
+Timing variables
+*/
+const timing = {
+	cursorBlinkSpeed : 250,
+	typingSpeed      : 125,
+	startGameDelay   : 1400,
+	startTypingDelay : 1600,
+};
 
 /*
 UI methods
@@ -21,8 +17,9 @@ const UI = {
 	curChar        : null,
 	userInput      : '',
 	maxInputLength : 50,
-	
-	allowedCharsRegex : /^[a-z0-9 ]+$/i,
+	blinking       : false,
+	inputOK        : false,
+	allowedChars   : /^[a-z0-9 ]+$/i,
 	
 	keycodesMap : {
 		enter  : [ '13' ],
@@ -39,50 +36,67 @@ const UI = {
 
 	blinkCursor : () => {
 		
-		let blinking = setInterval( () => { $('.cursor').toggleClass( 'blink' ) } , cursorSpeed );
+		UI.blinking = setInterval( () => { $('.cursor').toggleClass( 'blink' ) } , timing.cursorBlinkSpeed );
 	
+	},
+
+	greenCursor : () => {
+
+		if ( UI.blinking ) clearInterval( UI.blinking );
+		
+		$('.cursor').removeClass( 'blink' );
+	
+	},
+
+	transparentCursor : () => {
+
+		if ( UI.blinking ) clearInterval( UI.blinking );
+		
+		$('.cursor').addClass( 'blink' );
+	
+	},
+
+	flashScreen : () => {
+
+		$('#screen').addClass('flash');
+
+		setTimeout( () => { $('#screen').removeClass('flash') }, 100 );
+
+	},
+
+	handleInput : () => {
+
+		gamePlay.processInput( UI.userInput );
+
+		UI.userInput = '';
+
+		textTerminal.cmdPrompt();
+
 	},
 
 	isKeyPressed : ( keycode ) => {
 
-		let searchResult = $.inArray( UI.curKeyCode.toString(), UI.keycodesMap[keycode] );
-
-		return ( searchResult > -1 );
-
-	},
-
-	respondToInput : () => {
-
-		textTerminal.typeLetter( "\n" );
-		textTerminal.typeLetter( textTerminal.promptChar );
-
-		console.log( UI.userInput );
-
-		UI.userInput = '';
+		return ( $.inArray( UI.curKeyCode.toString(), UI.keycodesMap[keycode] ) > -1 );
 
 	},
 
 	watchKeyPress : ( event ) => {
 
-		if ( !isWriting ) {
+		if ( !textTerminal.isTyping ) {
 
 			UI.curKeyCode = ( event.keyCode ? event.keyCode : event.which ).toString();
 
-			if ( !isPlaying && UI.isKeyPressed( 'enter' ) ) {
+			if ( !gamePlay.isPlaying && UI.isKeyPressed( 'enter' ) ) {
 
 				gamePlay.toggleGameMode();
 
-				setTimeout( gamePlay.startGame, gameDelay );
+				setTimeout( gamePlay.startGame, timing.startGameDelay );
 
-			} else if ( !gameStarted && UI.isKeyPressed( 'delete' ) ) {
-
-				gamePlay.startGame();
-
-			} else if ( inputOK ) {
+			} else if ( UI.inputOK ) {
 
 				if ( UI.isKeyPressed( 'enter' ) ) {
 
-					UI.respondToInput();
+					UI.handleInput();
 
 				} else if ( UI.isKeyPressed( 'delete' ) ) {
 
@@ -94,10 +108,8 @@ const UI = {
 
 					curChar = String.fromCharCode( UI.curKeyCode );
 
-					console.log( UI.userInput.length, UI.maxInputLength );
-
-					// only send characters that match allowedCharsRegex
-					if ( UI.allowedCharsRegex.test( curChar ) && ( UI.userInput.length < UI.maxInputLength ) ) {
+					// only send characters that match allowedChars
+					if ( UI.allowedChars.test( curChar ) && ( UI.userInput.length < UI.maxInputLength ) ) {
 
 						UI.userInput = UI.userInput + curChar;
 
@@ -105,7 +117,8 @@ const UI = {
 
 					} else {
 
-						// TODO: flash screen?
+						UI.flashScreen();
+
 					}
 
 				}
@@ -123,7 +136,9 @@ Game play methods
 */
 const gamePlay = {
 
-	curScript : null,
+	isPlaying  : false,
+	curScript  : null,
+	validInput : /^((y|yes|n|no|ok|nope)|([a-z]+ (n|s|e|w|north|south|east|west)))$/i,
 
 	loadGame : () => {
 
@@ -133,25 +148,38 @@ const gamePlay = {
 
 	toggleGameMode : () => {
 
-		isPlaying = !isPlaying;
+		gamePlay.isPlaying = !gamePlay.isPlaying;
 
 		$('#game').toggleClass( 'playing' );
 	
 	},
 
-	clearScreen : () => {
+	processInput : ( input ) => {
 
-		isWriting = true;
+		if ( gamePlay.validInput.test( input ) ) {
 
-		textTerminal.clearText();
+			// no space = Y/N
+			// otherwise:
+				// extract direction
+				// calculate movement
+				// update game object
+				// next turn
+
+			alert( input );
+
+		} else {
+
+			UI.flashScreen();
+
+		}
 
 	},
 
 	startGame : () => {
 
-		gameStarted = true;
-
 		gamePlay.curScript = 'startGame';
+
+		textTerminal.clearScreen();
 		
 		textTerminal.typeFromCurScript( textTerminal.waitForInput );
 
@@ -170,24 +198,31 @@ const gamePlay = {
 /*
 Simple terminal for I/O
 */
-let textTerminal = {
+const textTerminal = {
 
 	screen     : $('#text .content'),
 	scriptPath : 'js/script/',
 	scriptExt  : '.script',
 	promptChar : '>',
-	
+
+	isTyping  : true,
 	textAr    : [],
 	curLetter : 0,
+	typing    : false, 
 	callback  : false, // function to call after the last letter is typed
-	
-	typing : setInterval( null, longDelay ), // set a long null interval to make it easier to interact with in future
 
-	clearText : () => {
+	clearScreen : () => {
 		
-		window.clearInterval( textTerminal.typing );
+		if ( textTerminal.typing ) clearInterval( textTerminal.typing );
 		
-		textTerminal.screen.text( '' );
+		textTerminal.screen.text('');
+
+	},
+
+	cmdPrompt : () => {
+
+		textTerminal.typeLetter( "\n" );
+		textTerminal.typeLetter( textTerminal.promptChar );
 
 	},
 
@@ -196,45 +231,46 @@ let textTerminal = {
 	*/
 	typeFromCurScript : ( callback = false ) => {
 
-		textTerminal.typeFromFile( gamePlay.curScript + textTerminal.scriptExt, callback );
+		let filePath = textTerminal.scriptPath + gamePlay.curScript + textTerminal.scriptExt;
+
+		textTerminal.typeFromFile( filePath, callback );
 
 	},
 
 	/*
-	Fires typeText after the startTypingDelay
+	Reads script from file, then send the contents to typeText
 	*/
-	typeFromFile : ( file, callback = false ) => {
+	typeFromFile : ( filePath, callback = false ) => {
 
 		textTerminal.callback = callback;
 
-		gamePlay.clearScreen();
+		jQuery.get( filePath, ( text ) => {
 
-		// TODO: move get here, update typeText to take a string as input?
+			// replace | with 5 tabs to delay cursor movement and vary typing speed
+			text = text.replace( /\|/g, "\t\t\t\t\t" );
 
-		setTimeout( textTerminal.typeText.bind( null, file ), startTypingDelay );
+			textTerminal.typeText( text );
+
+		});
 
 	},
 
 	/*
 	Reads in text from script file, processes it, and types it out one letter at a time to the terminal
 	*/
-	typeText : ( file ) => {
+	typeText : ( text ) => {
 
-		let filePath = textTerminal.scriptPath + file;
+		setTimeout( () => {
 
-		isWriting = true;
-
-		jQuery.get( filePath, ( data ) => {
-			
-			// replace | with 5 tabs. tabs delay the cursor movement, so pipes in
-			// the input can be used to vary typing speed.
-			textTerminal.textAr = data.replace( /\|/g, "\t\t\t\t\t" ).split( '' );
+			textTerminal.isTyping = true;
 
 			textTerminal.curLetter = 0;
 
-			textTerminal.typing = setInterval( textTerminal.typeLetter.bind( null ), typingDelay );
-		
-		});
+			textTerminal.textAr = text.split('');
+
+			textTerminal.typing = setInterval( textTerminal.typeLetter.bind( null ), timing.typingSpeed );
+
+		}, timing.startTypingDelay );
 
 	},
 
@@ -246,11 +282,11 @@ let textTerminal = {
 		// stop typing when we reach the end of the text and call the callback if set
 		if ( letter == null && textTerminal.curLetter > textTerminal.textAr.length - 1 ) {
 
+			textTerminal.isTyping = false;
+
+			clearInterval( textTerminal.typing );
+
 			if ( textTerminal.callback ) textTerminal.callback();
-
-			window.clearInterval( textTerminal.typing );
-
-			isWriting = false;
 
 		} else {
 
@@ -267,7 +303,7 @@ let textTerminal = {
 			
 			} else if ( letter == " " ) {
 				
-				textTerminal.screen.append( '\xa0' );
+				textTerminal.screen.append( '\xa0' ); // nbsp
 			
 			} else {
 
@@ -301,9 +337,9 @@ let textTerminal = {
 	*/
 	waitForInput : () => {
 
-		textTerminal.typeLetter( textTerminal.promptChar );
+		textTerminal.cmdPrompt();
 
-		inputOK = true;
+		UI.inputOK = true;
 
 	},
 
