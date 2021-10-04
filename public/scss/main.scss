@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	background-clip: padding-box;
+	font-family: monospace;
+	color: rgba( white, 0.75 );
+}
+
+body {
+	background-image: linear-gradient( to right top, #182636, #1c2739, #20273c, #24273D, #0d3441 );
+	height: 100vh;
+	display: grid;
+	align-content: center;
+	justify-content: center;
+}
+
+h1, p {
+	text-align: center;
+	text-shadow: 0.25em 0.25em 0.5em rgba( black, 0.3 );
+}
+
+h1 {
+	margin: 0;
+	font-size: 30px;
+}
+
+p {
+	margin: 0.5em 0 1em;
+	font-size: 18px;
+}
+
+#game {
+	width: 1000px;
+	height: 666px;
+	background: #000;
+	overflow: hidden;
+	position: relative;
+	box-shadow: 0.5rem 0.5rem 1.5rem rgba( black, 0.5 ) ;
+
+	#room, #desk, #computer {
+		transition: transform 1s ease-in-out;
+	}
+
+	#room, #room img {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+	}
+
+	#room img {
+		width: 100%;
+	}
+
+	#desk, #desk img {
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		left: 0;
+	}
+
+	#desk img {
+		width: 100%;
+	}
+
+	#computer {
+		position: absolute;
+		top: 55px;
+		right: 789px;
+		bottom: 660px;
+		left: 203px;
+		width: 585px;
+		height: 584px;
+
+		#screen, #reflection {
+			background-color: #000;
+			position: absolute;
+			top: 40px;
+			left: 130px;
+			width: 293px;
+			height: 223px;
+			background: #000;
+			overflow: hidden;
+
+			#text {
+				position: absolute;
+				right: 20px;
+				left: 20px;
+				bottom: 20px;
+				font-size: 12px;
+				min-height: 183px;
+				overflow: scroll;
+
+				span {
+					font-family: 'VT323';
+					text-transform: uppercase;
+					color: green;
+				}
+
+				span.cursor {
+					display: inline-block;
+					color: black;
+					background-color: rgba( green , 0.6 );
+				}
+
+				span.blink {
+					color: green;
+					background-color: transparent;
+				}
+			}
+		}
+
+		#reflection {
+			background: linear-gradient( 200deg, rgba( white, 0.125 ) 20%, transparent );
+		}
+	}
+
+	#computer img {
+		position: absolute;
+		width: 100%;
+	}
+}
+
+#game.playing {
+	#room {
+		transform: scaleX(1.6) scaleY(1.6);
+	}
+	#desk {
+		transform: scaleX(1.8) scaleY(1.5);
+	}
+	#computer {
+		transform: scaleX(2.5) scaleY(2.5) translateY(134px) translateX(19px);
+	}
+}

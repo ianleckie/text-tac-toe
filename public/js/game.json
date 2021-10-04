@@ -1,0 +1,88 @@
+{
+
+	settings : {
+
+		xyMin : 0,
+		xyMax : 2,
+
+		winningCombos : [
+			[ [0,0], [0,1], [0,2] ],
+			[ [1,0], [1,1], [1,2] ],
+			[ [2,0], [2,1], [2,2] ],
+			[ [0,0], [1,0], [2,0] ],
+			[ [0,1], [1,1], [2,1] ],
+			[ [0,2], [1,2], [2,2] ],
+			[ [0,0], [1,1], [2,2] ],
+			[ [0,2], [1,1], [2,0] ]
+		]
+
+	},
+
+	rooms : [
+		
+		{
+			position : [0,0],
+			exits : { N: false, E: true, S: true, W: false }
+		},
+		
+		{
+			position : [1,0],
+			exits : { N: false, E: true, S: true, W: true }
+		},
+		
+		{
+			position : [2,0],
+			exits : { N: false, E: false, S: true, W: true }
+		},
+		
+		{
+			position : [0,1],
+			exits : { N: true, E: true, S: true, W: false }
+		},
+		
+		{
+			position : [1,1],
+			exits : { N: true, E: true, S: true, W: true }
+		},
+		
+		{
+			position : [2,1],
+			exits : { N: true, E: false, S: true, W: true }
+		},
+		
+		{
+			position : [0,2],
+			exits : { N: true, E: true, S: false, W: false }
+		},
+		
+		{
+			position : [1,2],
+			exits : { N: true, E: true, S: false, W: true }
+		},
+		
+		{
+			position : [2,2],
+			exits : { N: true, E: false, S: false, W: true }
+		}
+	
+	],
+
+	players : [
+
+		{
+			name : 'X',
+			position : null,
+			claimed : [],
+			toes: 0
+		},
+
+		{
+			name : 'O',
+			position : null,
+			claimed : [],
+			toes: 0
+		}
+
+	]
+
+}
