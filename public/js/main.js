@@ -30,7 +30,7 @@ const UI = {
 
 		UI.blinkCursor();
 
-		gamePlay.newGame();
+		GamePlay.newGame();
 
 	},
 
@@ -66,11 +66,11 @@ const UI = {
 
 	handleInput : () => {
 
-		gamePlay.processInput( UI.userInput );
+		GamePlay.processInput( UI.userInput );
 
 		UI.userInput = '';
 
-		textTerminal.cmdPrompt();
+		TextTerminal.cmdPrompt();
 
 	},
 
@@ -82,17 +82,14 @@ const UI = {
 
 	watchKeyPress : ( event ) => {
 
-		if ( !textTerminal.isTyping ) {
+		if ( !TextTerminal.isTyping ) {
 
 			UI.curKeyCode = ( event.keyCode ? event.keyCode : event.which ).toString();
 
-			if ( !gamePlay.isPlaying && UI.isKeyPressed( 'enter' ) ) {
+			if ( !GamePlay.isPlaying && UI.isKeyPressed( 'enter' ) ) {
 
-				// first press of enter triggers the animation and starts the game
-				gamePlay.toggleGameMode();
-				gamePlay.loadGameData();
-
-				setTimeout( gamePlay.startGame, timing.startGameDelay );
+				// first press of enter starts the game
+				GamePlay.init();
 
 			} else if ( UI.inputOK ) {
 
@@ -106,7 +103,7 @@ const UI = {
 					// delete one character
 					UI.userInput = UI.userInput.slice( 0, -1 );
 
-					textTerminal.deleteLetter();
+					TextTerminal.deleteLetter();
 
 				} else {
 
@@ -118,7 +115,7 @@ const UI = {
 
 						UI.userInput = UI.userInput + curChar;
 
-						textTerminal.typeLetter( curChar );
+						TextTerminal.typeLetter( curChar );
 
 					} else {
 
@@ -140,7 +137,7 @@ const UI = {
 /*
 Game play methods
 */
-let gamePlay = {
+let GamePlay = {
 
 	gameData   : {},
 	isPlaying  : false,
@@ -158,12 +155,21 @@ let gamePlay = {
 
 		inProgress : {
 
-			N : 'moveNorth',
-			E : 'moveEast',
-			S : 'moveSouth',
-			W : 'moveWest',
+			MN : 'moveNorth',
+			ME : 'moveEast',
+			MS : 'moveSouth',
+			MW : 'moveWest',
 
 		},
+
+	},
+
+	init : () => {
+
+		GamePlay.toggleGameMode();
+		GamePlay.loadGameData();
+
+		setTimeout( GamePlay.startGame, timing.startGameDelay );
 
 	},
 
@@ -183,7 +189,7 @@ let gamePlay = {
 
 		$.getJSON( 'js/gameData.json', ( json ) => {
 
-			gamePlay.gameData = json;
+			GamePlay.gameData = json;
 
 		});
 
@@ -191,7 +197,7 @@ let gamePlay = {
 
 	toggleGameMode : () => {
 
-		gamePlay.isPlaying = !gamePlay.isPlaying;
+		GamePlay.isPlaying = !GamePlay.isPlaying;
 
 		$('#game').toggleClass( 'playing' );
 	
@@ -199,12 +205,12 @@ let gamePlay = {
 
 	processInput : ( input ) => {
 
-		if ( gamePlay.validInput.test( input ) ) {
+		if ( GamePlay.validInput.test( input ) ) {
 
-			// hmmm..... needs more processing & checks first?
+			// hmmm..... needs more processing & checks first
 			// works for (Y|N), or (.+ )(N|E|S|W)
 			// (but (.+ )N also works for N, which it shouldn't)
-			gamePlay[ gamePlay.scriptActions[gamePlay.curScript][input.slice(-1)] ]();
+			GamePlay[ GamePlay.scriptActions[GamePlay.curScript][input.slice(-1)] ]();
 
 		} else {
 
@@ -217,19 +223,19 @@ let gamePlay = {
 
 	startGame : () => {
 
-		gamePlay.curScript = 'startGame';
+		GamePlay.curScript = 'startGame';
 
-		textTerminal.clearScreen();
+		TextTerminal.clearScreen();
 		
-		textTerminal.typeFromCurScript( textTerminal.waitForInput );
+		TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
 
 	},
 
 	newGame : () => {
 
-		gamePlay.curScript = 'newGame';
+		GamePlay.curScript = 'newGame';
 
-		textTerminal.typeFromCurScript();
+		TextTerminal.typeFromCurScript();
 
 	},
 
@@ -238,7 +244,7 @@ let gamePlay = {
 /*
 Simple terminal for I/O
 */
-const textTerminal = {
+const TextTerminal = {
 
 	screen     : $('#text .content'),
 	scriptPath : 'js/script/',
@@ -253,27 +259,27 @@ const textTerminal = {
 
 	clearScreen : () => {
 		
-		if ( textTerminal.typing ) clearInterval( textTerminal.typing );
+		if ( TextTerminal.typing ) clearInterval( TextTerminal.typing );
 		
-		textTerminal.screen.text('');
+		TextTerminal.screen.text('');
 
 	},
 
 	cmdPrompt : () => {
 
-		textTerminal.typeLetter( "\n" );
-		textTerminal.typeLetter( textTerminal.promptChar );
+		TextTerminal.typeLetter( "\n" );
+		TextTerminal.typeLetter( TextTerminal.promptChar );
 
 	},
 
 	/*
-	Types the script saved in gamePlay.curScript
+	Types the script saved in GamePlay.curScript
 	*/
 	typeFromCurScript : ( callback = false ) => {
 
-		let filePath = textTerminal.scriptPath + gamePlay.curScript + textTerminal.scriptExt;
+		let filePath = TextTerminal.scriptPath + GamePlay.curScript + TextTerminal.scriptExt;
 
-		textTerminal.typeFromFile( filePath, callback );
+		TextTerminal.typeFromFile( filePath, callback );
 
 	},
 
@@ -282,14 +288,14 @@ const textTerminal = {
 	*/
 	typeFromFile : ( filePath, callback = false ) => {
 
-		textTerminal.callback = callback;
+		TextTerminal.callback = callback;
 
 		$.get( filePath, ( text ) => {
 
 			// replace | with 5 tabs to delay cursor movement and vary typing speed
 			text = text.replace( /\|/g, "\t\t\t\t\t" );
 
-			textTerminal.typeText( text );
+			TextTerminal.typeText( text );
 
 		});
 
@@ -302,13 +308,13 @@ const textTerminal = {
 
 		setTimeout( () => {
 
-			textTerminal.isTyping = true;
+			TextTerminal.isTyping = true;
 
-			textTerminal.curLetter = 0;
+			TextTerminal.curLetter = 0;
 
-			textTerminal.textAr = text.split('');
+			TextTerminal.textAr = text.split('');
 
-			textTerminal.typing = setInterval( textTerminal.typeLetter.bind( null ), timing.typingSpeed );
+			TextTerminal.typing = setInterval( TextTerminal.typeLetter.bind( null ), timing.typingSpeed );
 
 		}, timing.startTypingDelay );
 
@@ -320,38 +326,38 @@ const textTerminal = {
 	typeLetter : ( letter = null ) => {
 
 		// stop typing when we reach the end of the text and call the callback if set
-		if ( letter == null && textTerminal.curLetter > textTerminal.textAr.length - 1 ) {
+		if ( letter == null && TextTerminal.curLetter > TextTerminal.textAr.length - 1 ) {
 
-			textTerminal.isTyping = false;
+			TextTerminal.isTyping = false;
 
-			clearInterval( textTerminal.typing );
+			clearInterval( TextTerminal.typing );
 
-			if ( textTerminal.callback ) textTerminal.callback();
+			if ( TextTerminal.callback ) TextTerminal.callback();
 
 		} else {
 
-			// type the letter that is passed, otherwise type the next letter from textTerminal.textAr
-			letter = ( letter ) ? letter : textTerminal.textAr[textTerminal.curLetter];
+			// type the letter that is passed, otherwise type the next letter from TextTerminal.textAr
+			letter = ( letter ) ? letter : TextTerminal.textAr[TextTerminal.curLetter];
 
 			if ( letter == "\n" ) {
 				
-				textTerminal.screen.append( $('<br>') );
+				TextTerminal.screen.append( $('<br>') );
 			
 			} else if ( letter == "\t" ) {
 				
-				textTerminal.screen.append( $('<wbr>') ); // tabs output zero-width spaces to add delay
+				TextTerminal.screen.append( $('<wbr>') ); // tabs output zero-width spaces to add delay
 			
 			} else if ( letter == " " ) {
 				
-				textTerminal.screen.append( '\xa0' ); // nbsp
+				TextTerminal.screen.append( '\xa0' ); // nbsp
 			
 			} else {
 
-				textTerminal.screen.append( letter );
+				TextTerminal.screen.append( letter );
 			
 			}
 
-			textTerminal.curLetter++;
+			TextTerminal.curLetter++;
 
 		}
 
@@ -362,11 +368,11 @@ const textTerminal = {
 	*/
 	deleteLetter : () => {
 
-		if ( textTerminal.screen.html().slice( -1 ) != textTerminal.promptChar ) {
+		if ( TextTerminal.screen.html().slice( -1 ) != TextTerminal.promptChar ) {
 
-			let newHTML = ( textTerminal.screen.html().slice( -6 ) == '&nbsp;' ) ? textTerminal.screen.html().slice( 0, -6 ) : textTerminal.screen.html().slice( 0, -1 );
+			let newHTML = ( TextTerminal.screen.html().slice( -6 ) == '&nbsp;' ) ? TextTerminal.screen.html().slice( 0, -6 ) : TextTerminal.screen.html().slice( 0, -1 );
 
-			textTerminal.screen.html( newHTML );
+			TextTerminal.screen.html( newHTML );
 
 		}
 
@@ -377,7 +383,7 @@ const textTerminal = {
 	*/
 	waitForInput : () => {
 
-		textTerminal.cmdPrompt();
+		TextTerminal.cmdPrompt();
 
 		UI.inputOK = true;
 

@@ -1,7 +1,8 @@
 {
    "settings" : {
-      "xyMin" : 0,
-      "xyMax" : 2,
+      "positionMin" : 0,
+      "positionMax" : 2,
+      "startingPosition" : [-1,-1],
       "winningCombos" : [
          [ "aa", "ab", "ac" ],
          [ "ba", "bb", "bc" ],
@@ -15,52 +16,43 @@
    },
    "rooms" : {
       "aa" : {
-         "position" : [0,0],
-         "exits" : { "N": false, "E": true, "S": true, "W": false }
-      },
-      "ba" : {
-         "position" : [1,0],
-         "exits" : { "N": false, "E": true, "S": true, "W": true }
-      },
-      "ca" : {
-         "position" : [2,0],
-         "exits" : { "N": false, "E": false, "S": true, "W": true }
+         "position" : [0,0]
       },
       "ab" : {
-         "position" : [0,1],
-         "exits" : { "N": true, "E": true, "S": true, "W": false }
-      },
-      "bb" : {
-         "position" : [1,1],
-         "exits" : { "N": true, "E": true, "S": true, "W": true }
-      },
-      "cb" : {
-         "position" : [2,1],
-         "exits" : { "N": true, "E": false, "S": true, "W": true }
+         "position" : [0,1]
       },
       "ac" : {
-         "position" : [0,2],
-         "exits" : { "N": true, "E": true, "S": false, "W": false }
+         "position" : [0,2]
+      },
+      "ba" : {
+         "position" : [1,0]
+      },
+      "bb" : {
+         "position" : [1,1]
       },
       "bc" : {
-         "position" : [1,2],
-         "exits" : { "N": true, "E": true, "S": false, "W": true }
+         "position" : [1,2]
+      },
+      "ca" : {
+         "position" : [2,0]
+      },
+      "cb" : {
+         "position" : [2,1]
       },
       "cc" : {
-         "position" : [2,2],
-         "exits" : { "N": true, "E": false, "S": false, "W": true }
+         "position" : [2,2]
       }
    },
    "players" : {
       "one": {
          "name" : "X",
-         "position" : null,
+         "position" : [-1,-1],
          "claimed" : [],
          "toes": 0
       },
       "two": {
          "name" : "O",
-         "position" : null,
+         "position" : [-1,-1],
          "claimed" : [],
          "toes": 0
       }
