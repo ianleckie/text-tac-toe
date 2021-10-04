@@ -88,7 +88,9 @@ const UI = {
 
 			if ( !gamePlay.isPlaying && UI.isKeyPressed( 'enter' ) ) {
 
+				// first press of enter triggers the animation and starts the game
 				gamePlay.toggleGameMode();
+				gamePlay.loadGameData();
 
 				setTimeout( gamePlay.startGame, timing.startGameDelay );
 
@@ -96,19 +98,22 @@ const UI = {
 
 				if ( UI.isKeyPressed( 'enter' ) ) {
 
+					// subsequent presses of enter fire handleInput
 					UI.handleInput();
 
 				} else if ( UI.isKeyPressed( 'delete' ) ) {
 
+					// delete one character
 					UI.userInput = UI.userInput.slice( 0, -1 );
 
 					textTerminal.deleteLetter();
 
 				} else {
 
+					// if input character is OK, send it to the terminal and concat it to the userInput property
 					curChar = String.fromCharCode( UI.curKeyCode );
 
-					// only send characters that match allowedChars
+					// only allowed characters, cap userInput length at maxInputLength
 					if ( UI.allowedChars.test( curChar ) && ( UI.userInput.length < UI.maxInputLength ) ) {
 
 						UI.userInput = UI.userInput + curChar;
@@ -117,6 +122,7 @@ const UI = {
 
 					} else {
 
+						// error "message"
 						UI.flashScreen();
 
 					}
@@ -134,15 +140,52 @@ const UI = {
 /*
 Game play methods
 */
-const gamePlay = {
+let gamePlay = {
 
+	gameData   : {},
 	isPlaying  : false,
 	curScript  : null,
 	validInput : /^((y|yes|n|no|ok|nope)|([a-z]+ (n|s|e|w|north|south|east|west)))$/i,
 
-	loadGame : () => {
+	scriptActions : {
 
-		// init the default game object from JSON file
+		startGame : {
+
+			Y : 'nextTurn',
+			N : 'endGame',
+
+		},
+
+		inProgress : {
+
+			N : 'moveNorth',
+			E : 'moveEast',
+			S : 'moveSouth',
+			W : 'moveWest',
+
+		},
+
+	},
+
+	nextTurn : () => {
+
+		alert('NEXT');
+
+	},
+
+	endGame : () => {
+
+		alert('END');
+
+	},
+
+	loadGameData : () => {
+
+		$.getJSON( 'js/gameData.json', ( json ) => {
+
+			gamePlay.gameData = json;
+
+		});
 
 	},
 
@@ -158,17 +201,14 @@ const gamePlay = {
 
 		if ( gamePlay.validInput.test( input ) ) {
 
-			// no space = Y/N
-			// otherwise:
-				// extract direction
-				// calculate movement
-				// update game object
-				// next turn
-
-			alert( input );
+			// hmmm..... needs more processing & checks first?
+			// works for (Y|N), or (.+ )(N|E|S|W)
+			// (but (.+ )N also works for N, which it shouldn't)
+			gamePlay[ gamePlay.scriptActions[gamePlay.curScript][input.slice(-1)] ]();
 
 		} else {
 
+			// error "message"
 			UI.flashScreen();
 
 		}
@@ -244,7 +284,7 @@ const textTerminal = {
 
 		textTerminal.callback = callback;
 
-		jQuery.get( filePath, ( text ) => {
+		$.get( filePath, ( text ) => {
 
 			// replace | with 5 tabs to delay cursor movement and vary typing speed
 			text = text.replace( /\|/g, "\t\t\t\t\t" );
@@ -256,7 +296,7 @@ const textTerminal = {
 	},
 
 	/*
-	Reads in text from script file, processes it, and types it out one letter at a time to the terminal
+	Sends text to typeLetter one letter at a time
 	*/
 	typeText : ( text ) => {
 

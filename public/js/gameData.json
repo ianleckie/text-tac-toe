@@ -1,0 +1,68 @@
+{
+   "settings" : {
+      "xyMin" : 0,
+      "xyMax" : 2,
+      "winningCombos" : [
+         [ "aa", "ab", "ac" ],
+         [ "ba", "bb", "bc" ],
+         [ "ca", "cb", "cc" ],
+         [ "aa", "ba", "ca" ],
+         [ "ab", "bb", "cb" ],
+         [ "ac", "bc", "cc" ],
+         [ "aa", "bb", "cc" ],
+         [ "ac", "bb", "ca" ]
+      ]
+   },
+   "rooms" : {
+      "aa" : {
+         "position" : [0,0],
+         "exits" : { "N": false, "E": true, "S": true, "W": false }
+      },
+      "ba" : {
+         "position" : [1,0],
+         "exits" : { "N": false, "E": true, "S": true, "W": true }
+      },
+      "ca" : {
+         "position" : [2,0],
+         "exits" : { "N": false, "E": false, "S": true, "W": true }
+      },
+      "ab" : {
+         "position" : [0,1],
+         "exits" : { "N": true, "E": true, "S": true, "W": false }
+      },
+      "bb" : {
+         "position" : [1,1],
+         "exits" : { "N": true, "E": true, "S": true, "W": true }
+      },
+      "cb" : {
+         "position" : [2,1],
+         "exits" : { "N": true, "E": false, "S": true, "W": true }
+      },
+      "ac" : {
+         "position" : [0,2],
+         "exits" : { "N": true, "E": true, "S": false, "W": false }
+      },
+      "bc" : {
+         "position" : [1,2],
+         "exits" : { "N": true, "E": true, "S": false, "W": true }
+      },
+      "cc" : {
+         "position" : [2,2],
+         "exits" : { "N": true, "E": false, "S": false, "W": true }
+      }
+   },
+   "players" : {
+      "one": {
+         "name" : "X",
+         "position" : null,
+         "claimed" : [],
+         "toes": 0
+      },
+      "two": {
+         "name" : "O",
+         "position" : null,
+         "claimed" : [],
+         "toes": 0
+      }
+   }
+}
