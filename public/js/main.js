@@ -146,7 +146,7 @@ let GamePlay = {
 
 	commandMap : {
 
-		yesno : {
+		yesNo : {
 			processCommand : ( input ) => { return input; }, // entire input
 			commands : {
 				Y : [ 'y', 'yes', 'ok' ],
@@ -154,7 +154,7 @@ let GamePlay = {
 			},
 		},
 
-		dir : {
+		movement : {
 			processCommand : ( input ) => { return input.slice( input.indexOf(' ') ).trim(); }, // trim everything before space
 			commands : {
 				MN : [ 'n', 'north' ],
@@ -169,7 +169,7 @@ let GamePlay = {
 	inputMap : {
 
 		startGame : {
-			commandType : 'yesno',
+			commandType : 'yesNo',
 			scriptActions : {
 				Y : 'firstTurnLoop',
 				N : 'cancelGame',
@@ -177,7 +177,7 @@ let GamePlay = {
 		},
 
 		inProgress : {
-			commandType : 'dir',		
+			commandType : 'movement',		
 			scriptActions : {
 				MN : 'moveNorth',
 				ME : 'moveEast',
@@ -221,7 +221,7 @@ let GamePlay = {
 
 				} else {
 
-					// continue every loop if not found
+					// continue loop if not found
 					return true;
 
 				}
@@ -240,7 +240,7 @@ let GamePlay = {
 
 	newGame : () => {
 
-		GamePlay.curScript   = 'newGame';
+		GamePlay.curScript = 'newGame';
 
 		TextTerminal.typeFromCurScript();
 
@@ -266,8 +266,6 @@ let GamePlay = {
 	firstTurnLoop : () => {
 
 		GamePlay.initGameData();
-
-		console.log( GamePlay.gameData.players );
 
 		alert('FIRST TURN LOOP');
 
@@ -363,8 +361,6 @@ let GamePlay = {
 
 		// if the players are too close, try again
 		if ( GamePlay.playersTooClose() ) {
-
-			console.log('recurse');
 
 			GamePlay.randomizePlayerPositions();
 
