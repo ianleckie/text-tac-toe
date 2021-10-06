@@ -3,9 +3,9 @@ Timing variables
 */
 const timing = {
 	cursorBlinkSpeed : 250,
-	typingSpeed      : 0,
+	typingSpeed      : 125,
 	startGameDelay   : 1400,
-	startTypingDelay : 1600,
+	startTypingDelay : 1000,
 };
 
 /*
@@ -39,22 +39,6 @@ const UI = {
 		UI.blinking = setInterval( () => { $('.cursor').toggleClass( 'blink' ) } , timing.cursorBlinkSpeed );
 	
 	},
-
-	// greenCursor : () => {
-
-	// 	if ( UI.blinking ) clearInterval( UI.blinking );
-		
-	// 	$('.cursor').removeClass( 'blink' );
-	
-	// },
-
-	// transparentCursor : () => {
-
-	// 	if ( UI.blinking ) clearInterval( UI.blinking );
-		
-	// 	$('.cursor').addClass( 'blink' );
-	
-	// },
 
 	flashScreen : () => {
 
@@ -140,17 +124,18 @@ let GamePlay = {
 
 	gameData    : {},
 	isPlaying   : false,
+	curPlayer   : null,
 	curScript   : null,
 	useInputMap : null,
-	validInput  : /^((y|yes|n|no|ok|nope)|([a-z]+ (n|s|e|w|north|south|east|west)))$/i,
+	validInput  : /^((y|yes|ok|sure|n|no|nope|nah)|([a-z]+ (n|s|e|w|north|south|east|west)))$/i,
 
 	commandMap : {
 
 		yesNo : {
 			processCommand : ( input ) => { return input; }, // entire input
 			commands : {
-				Y : [ 'y', 'yes', 'ok' ],
-				N : [ 'n', 'no', 'nope' ],
+				Y : [ 'y', 'yes', 'ok', 'sure' ],
+				N : [ 'n', 'no', 'nope', 'nah' ],
 			},
 		},
 
@@ -171,18 +156,26 @@ let GamePlay = {
 		startGame : {
 			commandType : 'yesNo',
 			scriptActions : {
-				Y : 'firstTurnLoop',
-				N : 'cancelGame',
+				Y : () => { GamePlay.firstTurnLoop(); },
+				N : () => { GamePlay.cancelGame(); },
+			}
+		},
+
+		cancelGame : {
+			commandType : 'yesNo',
+			scriptActions : {
+				Y : () => { GamePlay.newGame(); },
+				N : () => { GamePlay.startGame(); },
 			}
 		},
 
 		inProgress : {
 			commandType : 'movement',		
 			scriptActions : {
-				MN : 'moveNorth',
-				ME : 'moveEast',
-				MS : 'moveSouth',
-				MW : 'moveWest',
+				MN : () => { GamePlay.moveNorth(); },
+				ME : () => { GamePlay.moveEast(); },
+				MS : () => { GamePlay.moveSouth(); },
+				MW : () => { GamePlay.moveWest(); },
 			}
 		},
 
@@ -215,7 +208,7 @@ let GamePlay = {
 				if ( commandObj.commands[action].indexOf( command.toLowerCase() ) > -1 ) {
 
 					// if the command is a synonym for one of the script actions, call it
-					GamePlay[ GamePlay.inputMap[ GamePlay.useInputMap ].scriptActions[ action ] ]();
+					GamePlay.inputMap[ GamePlay.useInputMap ].scriptActions[ action ]();
 
 					inputOK = true;
 
@@ -240,6 +233,8 @@ let GamePlay = {
 
 	newGame : () => {
 
+		if ( GamePlay.isPlaying ) GamePlay.toggleGameMode();
+
 		GamePlay.curScript = 'newGame';
 
 		TextTerminal.typeFromCurScript();
@@ -248,10 +243,7 @@ let GamePlay = {
 
 	startGame : () => {
 
-		GamePlay.curScript   = 'startGame';
-		GamePlay.useInputMap = 'startGame';
-
-		TextTerminal.clearScreen();
+		GamePlay.useInputMap = GamePlay.curScript = 'startGame';
 		
 		TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
 
@@ -259,7 +251,9 @@ let GamePlay = {
 
 	cancelGame : () => {
 
-		alert('END');
+		GamePlay.useInputMap = GamePlay.curScript = 'cancelGame';
+		
+		TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
 
 	},
 
@@ -269,11 +263,19 @@ let GamePlay = {
 
 		alert('FIRST TURN LOOP');
 
+		GamePlay.nextPlayer();
+
+		// playFirstTurn
+
 	},
 
-	playFirstTurn : () => {
+	playFirstTurn : ( callback = null ) => {
 
 		alert('FIRST');
+
+		// GamePlay.useInputMap = GamePlay.curScript = 'firstTurn';
+		
+		// TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
 
 	},
 
@@ -285,17 +287,19 @@ let GamePlay = {
 
 	nextPlayer : () => {
 
-		alert('NEXT PLAYER');
+		GamePlay.curPlayer = Number( ( GamePlay.curPlayer == null ) ? 0 : !GamePlay.curPlayer );
+
+		console.log( GamePlay.curPlayer );
 
 	},
 
-	processTurn : () => {
+	processRound : () => {
 
 		alert('PROCESS');
 
 	},
 
-	turnLoop : () => {
+	playRound : () => {
 
 		alert('TURN LOOP');
 
@@ -303,7 +307,7 @@ let GamePlay = {
 
 	nextTurn : () => {
 
-		GamePlay.processTurn();
+		GamePlay.processRound();
 
 		alert('NEXT TURN');
 
@@ -427,24 +431,26 @@ const TextTerminal = {
 	/*
 	Types the script saved in GamePlay.curScript
 	*/
-	typeFromCurScript : ( callback = false ) => {
+	typeFromCurScript : ( callback = false, clearScreen = true ) => {
 
 		// TODO: pass variables object to script, serve scripts via PHP using mustache
 
 		let filePath = TextTerminal.scriptPath + GamePlay.curScript + TextTerminal.scriptExt;
 
-		TextTerminal.typeFromFile( filePath, callback );
+		TextTerminal.typeFromFile( filePath, callback, clearScreen );
 
 	},
 
 	/*
 	Reads script from file, then send the contents to typeText
 	*/
-	typeFromFile : ( filePath, callback = false ) => {
+	typeFromFile : ( filePath, callback = false, clearScreen = true ) => {
 
 		TextTerminal.callback = callback;
 
 		$.get( filePath, ( text ) => {
+
+			if ( clearScreen ) TextTerminal.clearScreen();
 
 			// replace | with 5 tabs to delay cursor movement and vary typing speed
 			text = text.replace( /\|/g, "\t\t\t\t\t" );

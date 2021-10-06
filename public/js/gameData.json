@@ -15,31 +15,40 @@
    },
    "rooms" : {
       "aa" : {
-         "position" : [0,0]
+         "position" : [0,0],
+         "exits" : ["E","S"]
       },
       "ab" : {
-         "position" : [0,1]
+         "position" : [0,1],
+         "exits" : ["E","S","W"]
       },
       "ac" : {
-         "position" : [0,2]
+         "position" : [0,2],
+         "exits" : ["S","W"]
       },
       "ba" : {
-         "position" : [1,0]
+         "position" : [1,0],
+         "exits" : ["N","E","W"]
       },
       "bb" : {
-         "position" : [1,1]
+         "position" : [1,1],
+         "exits" : ["N","E","S","W"]
       },
       "bc" : {
-         "position" : [1,2]
+         "position" : [1,2],
+         "exits" : ["N","S","W"]
       },
       "ca" : {
-         "position" : [2,0]
+         "position" : [2,0],
+         "exits" : ["N","E"]
       },
       "cb" : {
-         "position" : [2,1]
+         "position" : [2,1],
+         "exits" : ["N","E","W"]
       },
       "cc" : {
-         "position" : [2,2]
+         "position" : [2,2],
+         "exits" : ["N","W"]
       }
    },
    "players" : [
