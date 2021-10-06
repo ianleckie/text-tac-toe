@@ -2,7 +2,6 @@
    "settings" : {
       "positionMin" : 0,
       "positionMax" : 2,
-      "startingPosition" : [-1,-1],
       "winningCombos" : [
          [ "aa", "ab", "ac" ],
          [ "ba", "bb", "bc" ],
@@ -43,18 +42,18 @@
          "position" : [2,2]
       }
    },
-   "players" : {
-      "one": {
+   "players" : [
+      {
          "name" : "X",
-         "position" : [-1,-1],
+         "rooom" : null,
          "claimed" : [],
          "toes": 0
       },
-      "two": {
+      {
          "name" : "O",
-         "position" : [-1,-1],
+         "rooom" : null,
          "claimed" : [],
          "toes": 0
       }
-   }
+   ]
 }

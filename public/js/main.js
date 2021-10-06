@@ -3,7 +3,7 @@ Timing variables
 */
 const timing = {
 	cursorBlinkSpeed : 250,
-	typingSpeed      : 125,
+	typingSpeed      : 0,
 	startGameDelay   : 1400,
 	startTypingDelay : 1600,
 };
@@ -40,21 +40,21 @@ const UI = {
 	
 	},
 
-	greenCursor : () => {
+	// greenCursor : () => {
 
-		if ( UI.blinking ) clearInterval( UI.blinking );
+	// 	if ( UI.blinking ) clearInterval( UI.blinking );
 		
-		$('.cursor').removeClass( 'blink' );
+	// 	$('.cursor').removeClass( 'blink' );
 	
-	},
+	// },
 
-	transparentCursor : () => {
+	// transparentCursor : () => {
 
-		if ( UI.blinking ) clearInterval( UI.blinking );
+	// 	if ( UI.blinking ) clearInterval( UI.blinking );
 		
-		$('.cursor').addClass( 'blink' );
+	// 	$('.cursor').addClass( 'blink' );
 	
-	},
+	// },
 
 	flashScreen : () => {
 
@@ -119,7 +119,6 @@ const UI = {
 
 					} else {
 
-						// error "message"
 						UI.flashScreen();
 
 					}
@@ -139,27 +138,52 @@ Game play methods
 */
 let GamePlay = {
 
-	gameData   : {},
-	isPlaying  : false,
-	curScript  : null,
-	validInput : /^((y|yes|n|no|ok|nope)|([a-z]+ (n|s|e|w|north|south|east|west)))$/i,
+	gameData    : {},
+	isPlaying   : false,
+	curScript   : null,
+	useInputMap : null,
+	validInput  : /^((y|yes|n|no|ok|nope)|([a-z]+ (n|s|e|w|north|south|east|west)))$/i,
 
-	scriptActions : {
+	commandMap : {
+
+		yesno : {
+			processCommand : ( input ) => { return input; }, // entire input
+			commands : {
+				Y : [ 'y', 'yes', 'ok' ],
+				N : [ 'n', 'no', 'nope' ],
+			},
+		},
+
+		dir : {
+			processCommand : ( input ) => { return input.slice( input.indexOf(' ') ).trim(); }, // trim everything before space
+			commands : {
+				MN : [ 'n', 'north' ],
+				ME : [ 'e', 'east' ],
+				MS : [ 's', 'south' ],
+				MW : [ 'w', 'west' ],
+			},
+		},
+
+	},
+
+	inputMap : {
 
 		startGame : {
-
-			Y : 'nextTurn',
-			N : 'endGame',
-
+			commandType : 'yesno',
+			scriptActions : {
+				Y : 'firstTurnLoop',
+				N : 'cancelGame',
+			}
 		},
 
 		inProgress : {
-
-			MN : 'moveNorth',
-			ME : 'moveEast',
-			MS : 'moveSouth',
-			MW : 'moveWest',
-
+			commandType : 'dir',		
+			scriptActions : {
+				MN : 'moveNorth',
+				ME : 'moveEast',
+				MS : 'moveSouth',
+				MW : 'moveWest',
+			}
 		},
 
 	},
@@ -173,15 +197,135 @@ let GamePlay = {
 
 	},
 
-	nextTurn : () => {
+	processInput : ( input ) => {
 
-		alert('NEXT');
+		let inputOK = false;
+
+		if ( GamePlay.validInput.test( input ) ) {
+
+			let commandType = GamePlay.inputMap[GamePlay.useInputMap].commandType;
+
+			let commandObj = GamePlay.commandMap[commandType];
+
+			let command = commandObj.processCommand( input );
+
+			// loop through commandObj.commands object
+			Object.keys( commandObj.commands ).every( ( action ) => {
+
+				if ( commandObj.commands[action].indexOf( command.toLowerCase() ) > -1 ) {
+
+					// if the command is a synonym for one of the script actions, call it
+					GamePlay[ GamePlay.inputMap[ GamePlay.useInputMap ].scriptActions[ action ] ]();
+
+					inputOK = true;
+
+				} else {
+
+					// continue every loop if not found
+					return true;
+
+				}
+
+			});
+
+		}
+
+		if ( !inputOK ) {
+
+			UI.flashScreen();
+
+		}
 
 	},
 
-	endGame : () => {
+	newGame : () => {
+
+		GamePlay.curScript   = 'newGame';
+
+		TextTerminal.typeFromCurScript();
+
+	},
+
+	startGame : () => {
+
+		GamePlay.curScript   = 'startGame';
+		GamePlay.useInputMap = 'startGame';
+
+		TextTerminal.clearScreen();
+		
+		TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
+
+	},
+
+	cancelGame : () => {
 
 		alert('END');
+
+	},
+
+	firstTurnLoop : () => {
+
+		GamePlay.initGameData();
+
+		console.log( GamePlay.gameData.players );
+
+		alert('FIRST TURN LOOP');
+
+	},
+
+	playFirstTurn : () => {
+
+		alert('FIRST');
+
+	},
+
+	playTurn : () => {
+
+		alert('PLAY TURN');
+
+	},
+
+	nextPlayer : () => {
+
+		alert('NEXT PLAYER');
+
+	},
+
+	processTurn : () => {
+
+		alert('PROCESS');
+
+	},
+
+	turnLoop : () => {
+
+		alert('TURN LOOP');
+
+	},
+
+	nextTurn : () => {
+
+		GamePlay.processTurn();
+
+		alert('NEXT TURN');
+
+	},
+
+	isWinner : () => {
+
+		alert('CHECK WINNER');
+
+	},
+
+	winGame : () => {
+
+		alert('WIN');
+
+	},
+
+	playAgain : () => {
+
+		alert('PLAY AGAIN');
 
 	},
 
@@ -195,48 +339,60 @@ let GamePlay = {
 
 	},
 
+	initGameData : () => {
+
+		GamePlay.randomizePlayerPositions();
+
+	},
+
+	/*
+	Set random player positions
+	*/
+	randomizePlayerPositions : () => {
+
+		// pick a random room for each player
+		GamePlay.gameData.players.forEach( ( player ) => {
+
+			let roomNames = Object.keys( GamePlay.gameData.rooms );
+
+			let room = roomNames[ roomNames.length * Math.random() << 0 ];
+
+			player.room = room;
+
+		});
+
+		// if the players are too close, try again
+		if ( GamePlay.playersTooClose() ) {
+
+			console.log('recurse');
+
+			GamePlay.randomizePlayerPositions();
+
+		}
+
+	},
+
+	/*
+	Players are too close if the player positions are the same, or only one room away from each other
+	*/
+	playersTooClose : () => {
+
+		let roomOneCoords = GamePlay.gameData.rooms[ GamePlay.gameData.players[0].room ].position;
+		let roomTwoCoords = GamePlay.gameData.rooms[ GamePlay.gameData.players[1].room ].position;
+
+		return ( 
+			( roomOneCoords[0] == roomTwoCoords[0] && Math.abs( roomOneCoords[1] - roomTwoCoords[1] ) < 2 ) ||
+			( roomOneCoords[1] == roomTwoCoords[1] && Math.abs( roomOneCoords[0] - roomTwoCoords[0] ) < 2 )
+		);
+		
+	},
+
 	toggleGameMode : () => {
 
 		GamePlay.isPlaying = !GamePlay.isPlaying;
 
 		$('#game').toggleClass( 'playing' );
 	
-	},
-
-	processInput : ( input ) => {
-
-		if ( GamePlay.validInput.test( input ) ) {
-
-			// hmmm..... needs more processing & checks first
-			// works for (Y|N), or (.+ )(N|E|S|W)
-			// (but (.+ )N also works for N, which it shouldn't)
-			GamePlay[ GamePlay.scriptActions[GamePlay.curScript][input.slice(-1)] ]();
-
-		} else {
-
-			// error "message"
-			UI.flashScreen();
-
-		}
-
-	},
-
-	startGame : () => {
-
-		GamePlay.curScript = 'startGame';
-
-		TextTerminal.clearScreen();
-		
-		TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
-
-	},
-
-	newGame : () => {
-
-		GamePlay.curScript = 'newGame';
-
-		TextTerminal.typeFromCurScript();
-
 	},
 
 };
@@ -276,6 +432,8 @@ const TextTerminal = {
 	Types the script saved in GamePlay.curScript
 	*/
 	typeFromCurScript : ( callback = false ) => {
+
+		// TODO: pass variables object to script, serve scripts via PHP using mustache
 
 		let filePath = TextTerminal.scriptPath + GamePlay.curScript + TextTerminal.scriptExt;
 
