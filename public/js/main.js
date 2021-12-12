@@ -3,7 +3,7 @@ Timing variables
 */
 const timing = {
 	cursorBlinkSpeed : 250,
-	typingSpeed      : 125,
+	typingSpeed      : 75,
 	startGameDelay   : 1400,
 	startTypingDelay : 1000,
 };
@@ -127,20 +127,22 @@ let GamePlay = {
 	curPlayer   : null,
 	curScript   : null,
 	useInputMap : null,
-	validInput  : /^((y|yes|ok|sure|n|no|nope|nah)|([a-z]+ (n|s|e|w|north|south|east|west)))$/i,
+	validInput  : /^((y|yes|yeah|ok|sure|n|no|nope|nah)|([a-z]+ (n|s|e|w|north|south|east|west)))$/i,
+	movesCount  : 0,
+	roundCount  : 0,
 
 	commandMap : {
 
 		yesNo : {
 			processCommand : ( input ) => { return input; }, // entire input
 			commands : {
-				Y : [ 'y', 'yes', 'ok', 'sure' ],
+				Y : [ 'y', 'yes', 'ok', 'sure', 'yeah' ],
 				N : [ 'n', 'no', 'nope', 'nah' ],
 			},
 		},
 
 		movement : {
-			processCommand : ( input ) => { return input.slice( input.indexOf(' ') ).trim(); }, // trim everything before space
+			processCommand : ( input ) => { return input.slice( input.indexOf(' ') ).trim(); }, // everything after space
 			commands : {
 				MN : [ 'n', 'north' ],
 				ME : [ 'e', 'east' ],
@@ -156,7 +158,7 @@ let GamePlay = {
 		startGame : {
 			commandType : 'yesNo',
 			scriptActions : {
-				Y : () => { GamePlay.firstTurnLoop(); },
+				Y : () => { GamePlay.firstTurnLoop( 'start' ); },
 				N : () => { GamePlay.cancelGame(); },
 			}
 		},
@@ -169,13 +171,31 @@ let GamePlay = {
 			}
 		},
 
-		inProgress : {
+		firstTurn : {
 			commandType : 'movement',		
 			scriptActions : {
-				MN : () => { GamePlay.moveNorth(); },
-				ME : () => { GamePlay.moveEast(); },
-				MS : () => { GamePlay.moveSouth(); },
-				MW : () => { GamePlay.moveWest(); },
+				MN : () => { GamePlay.firstTurnLoop('move', 'N'); },
+				ME : () => { GamePlay.firstTurnLoop('move', 'E'); },
+				MS : () => { GamePlay.firstTurnLoop('move', 'S'); },
+				MW : () => { GamePlay.firstTurnLoop('move', 'W'); },
+			}
+		},
+
+		playTurn : {
+			commandType : 'movement',		
+			scriptActions : {
+				MN : () => { GamePlay.turnLoop('move', 'N'); },
+				ME : () => { GamePlay.turnLoop('move', 'N'); },
+				MS : () => { GamePlay.turnLoop('move', 'N'); },
+				MW : () => { GamePlay.turnLoop('move', 'N'); },
+			}
+		},
+
+		win : {
+			commandType : 'yesNo',
+			scriptActions : {
+				Y : () => { GamePlay.startGame(); },
+				N : () => { GamePlay.newGame(); },
 			}
 		},
 
@@ -190,7 +210,19 @@ let GamePlay = {
 
 	},
 
+	movePlayer : ( dir ) => {
+
+		// TODO: check proximity, claim room or move and claim random room
+
+		GamePlay.nextPlayer();
+
+		console.log('movePlayer');
+
+	},
+
 	processInput : ( input ) => {
+
+		console.log('processInput');
 
 		let inputOK = false;
 
@@ -233,7 +265,13 @@ let GamePlay = {
 
 	newGame : () => {
 
+		console.log('newGame');
+
+		GamePlay.roundCount = 0;
+
 		if ( GamePlay.isPlaying ) GamePlay.toggleGameMode();
+
+		GamePlay.curPlayer = null;
 
 		GamePlay.curScript = 'newGame';
 
@@ -243,6 +281,8 @@ let GamePlay = {
 
 	startGame : () => {
 
+		console.log('startGame');
+
 		GamePlay.useInputMap = GamePlay.curScript = 'startGame';
 		
 		TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
@@ -251,41 +291,131 @@ let GamePlay = {
 
 	cancelGame : () => {
 
+		console.log('cancelGame');
+
 		GamePlay.useInputMap = GamePlay.curScript = 'cancelGame';
 		
 		TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
 
 	},
 
-	firstTurnLoop : () => {
+	firstTurnLoop : ( mode = 'start', data = null ) => {
 
-		GamePlay.initGameData();
+		console.log('firstTurnLoop');
 
-		alert('FIRST TURN LOOP');
+		if ( mode == 'start' ) {
 
-		GamePlay.nextPlayer();
+			GamePlay.initGameData();
 
-		// playFirstTurn
+			GamePlay.firstTurnLoop('next');
 
-	},
+		} else if ( mode == 'move' ) {
 
-	playFirstTurn : ( callback = null ) => {
+			GamePlay.movesCount++;
 
-		alert('FIRST');
+			if ( GamePlay.movesCount > 1 ) {
 
-		// GamePlay.useInputMap = GamePlay.curScript = 'firstTurn';
+				GamePlay.movesCount = 0;
+				
+				if ( GamePlay.processRound() ) GamePlay.firstTurnLoop('end');
+				
+				return true;
+			
+			}
+
+			GamePlay.movePlayer(data);
 		
-		// TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
+			TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
+
+		} else if ( mode == 'next' ) {
+
+			GamePlay.nextPlayer();
+
+			GamePlay.playFirstTurn();
+
+		} else if ( mode == 'end' ) {
+
+			GamePlay.playTurn();
+
+		}
 
 	},
 
-	playTurn : () => {
+	turnLoop : ( mode = 'start', data = null ) => {
 
-		alert('PLAY TURN');
+		console.log('turnLoop');
+
+		if ( mode == 'start' ) {
+
+			GamePlay.initGameData();
+
+			GamePlay.firstTurnLoop('next');
+
+		} else if ( mode == 'move' ) {
+
+			GamePlay.movesCount++;
+
+			if ( GamePlay.movesCount > 1 ) {
+
+				GamePlay.movesCount = 0;
+				
+				if ( GamePlay.processRound() ) {
+
+					GamePlay.firstTurnLoop('end');
+				
+					return true;
+
+				} else {
+
+					return false;
+
+				}
+			
+			}
+
+			GamePlay.movePlayer(data);
+		
+			TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
+
+		} else if ( mode == 'next' ) {
+
+			GamePlay.nextPlayer();
+
+			GamePlay.playFirstTurn();
+
+		} else if ( mode == 'end' ) {
+
+			GamePlay.playTurn();
+
+		}
+
+	},
+
+	playFirstTurn : () => {
+
+		console.log('playFirstTurn');
+
+		GamePlay.useInputMap = GamePlay.curScript = 'firstTurn';
+		
+		TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
+
+	},
+
+	playTurn : ( dir ) => {
+
+		console.log('playTurn');
+
+		GamePlay.movePlayer( dir );
+
+		GamePlay.useInputMap = GamePlay.curScript = 'playTurn';
+		
+		TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
 
 	},
 
 	nextPlayer : () => {
+
+		console.log('nextPlayer');
 
 		GamePlay.curPlayer = Number( ( GamePlay.curPlayer == null ) ? 0 : !GamePlay.curPlayer );
 
@@ -295,43 +425,49 @@ let GamePlay = {
 
 	processRound : () => {
 
-		alert('PROCESS');
+		console.log('processRound');
 
-	},
+		GamePlay.roundCount ++;
 
-	playRound : () => {
-
-		alert('TURN LOOP');
-
-	},
-
-	nextTurn : () => {
-
-		GamePlay.processRound();
-
-		alert('NEXT TURN');
+		if ( GamePlay.roundCount > 6 ) {
+			
+			GamePlay.winGame();
+			
+			return false;
+		
+		} else {
+			
+			return true;
+		
+		}
 
 	},
 
 	isWinner : () => {
 
-		alert('CHECK WINNER');
+		console.log('isWinner');
 
 	},
 
 	winGame : () => {
 
-		alert('WIN');
+		console.log('winGame');
+
+		GamePlay.useInputMap = GamePlay.curScript = 'win';
+		
+		TextTerminal.typeFromCurScript( TextTerminal.waitForInput );
 
 	},
 
 	playAgain : () => {
 
-		alert('PLAY AGAIN');
+		console.log('playAgain');
 
 	},
 
 	loadGameData : () => {
+
+		console.log('loadGameData');
 
 		$.getJSON( 'js/gameData.json', ( json ) => {
 
@@ -343,6 +479,8 @@ let GamePlay = {
 
 	initGameData : () => {
 
+		console.log('initGameData');
+
 		GamePlay.randomizePlayerPositions();
 
 	},
@@ -351,6 +489,8 @@ let GamePlay = {
 	Set random player positions
 	*/
 	randomizePlayerPositions : () => {
+
+		console.log('randomizePlayerPositions');
 
 		// pick a random room for each player
 		GamePlay.gameData.players.forEach( ( player ) => {
